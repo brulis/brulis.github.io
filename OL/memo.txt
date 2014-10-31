@@ -1,0 +1,8 @@
+https://github.com/login/oauth/authorize?client_id=62c753fd0faf18392d85&scope=gist,repo
+ebed34bc296bbafb825b9d4a386b584a8e831cd3
+
+https://github.com/login/oauth/authorize?client_id=ebed34bc296bbafb825b9d4a386b584a8e831cd3&scope=gist,repo
+
+http://brulis.github.io/geojson.io/index.html
+
+http://www.digital-geography.com/online-geojson-editor/

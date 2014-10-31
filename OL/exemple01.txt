@@ -1,0 +1,100 @@
+
+
+  OpenLayers Example
+  
+
+
+  
+  
+    var lon = 11.967;
+    var lat = 57.7;
+
+
+var osm = new OpenLayers.Layer.OSM("Open Street Map");
+
+var trees = new OpenLayers.Layer.Vector(
+  "Träd",{
+    protocol: new OpenLayers.Protocol.HTTP({
+    url: 'postgis2geojson.php?geotable=trad&geomfield=wkb_geometry&fields=ogc_fid,%20plats,%20tr%C3%A4dnummer,%20art',
+    format: new OpenLayers.Format.GeoJSON({
+      internalProjection: new OpenLayers.Projection("EPSG:3857"),
+      externalProjection: new OpenLayers.Projection("EPSG:4326")})
+    }),
+    strategies: [new OpenLayers.Strategy.Fixed()]
+});            
+
+var toolbar = new OpenLayers.Control.Panel({
+    displayClass: 'olControlEditingToolbar'
+});
+toolbar.addControls([
+    // this control is just there to be able to deactivate the drawing
+    // tools
+    new OpenLayers.Control({
+        displayClass: 'olControlNavigation'
+    }),
+    new OpenLayers.Control.ModifyFeature(trees, { 
+        displayClass: 'olControlModifyFeature'
+    }),
+    new OpenLayers.Control.DrawFeature(trees, OpenLayers.Handler.Point, {
+        displayClass: 'olControlDrawFeaturePoint'
+    })
+]);
+
+var map = new OpenLayers.Map("map", {
+  projection: new OpenLayers.Projection("EPSG:3857"),
+  units: "m",
+  displayProjection: new OpenLayers.Projection("EPSG:4326"),
+  controls: [
+    new OpenLayers.Control.Navigation(),
+    new OpenLayers.Control.KeyboardDefaults(),
+    new OpenLayers.Control.PanZoomBar(),
+    new OpenLayers.Control.Scale(),
+    new OpenLayers.Control.Attribution(),
+    toolbar
+  ]
+});
+
+map.addLayers([osm, trees]);
+
+map.addControl(new OpenLayers.Control.LayerSwitcher());
+
+select = new OpenLayers.Control.SelectFeature(trees);
+
+trees.events.on({
+  "featureselected": onFeatureSelect,
+  "featureunselected": onFeatureUnselect
+});
+
+map.addControl(select);
+select.activate();
+
+map.setCenter(new OpenLayers.LonLat(lon, lat).transform(
+  new OpenLayers.Projection("EPSG:4326"),
+  map.getProjectionObject()
+), 10);
+
+function onPopupClose(evt) {
+  select.unselectAll();
+}
+
+function onFeatureSelect(event) {
+  var feature = event.feature;
+  var content = "<strong>" + feature.attributes.art 
+    + "</strong> (Id: " + feature.attributes.trädnummer + ")";
+  popup = new OpenLayers.Popup.FramedCloud("chicken", 
+    feature.geometry.getBounds().getCenterLonLat(),
+    new OpenLayers.Size(100,100),
+    content,
+    null, true, onPopupClose);
+    feature.popup = popup;
+    map.addPopup(popup);
+}
+
+function onFeatureUnselect(event) {
+  var feature = event.feature;
+  if(feature.popup) {
+    map.removePopup(feature.popup);
+    feature.popup.destroy();
+    delete feature.popup;
+  }
+}
